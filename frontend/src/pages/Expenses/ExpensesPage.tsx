@@ -77,13 +77,16 @@ export function ExpensesPage() {
     <DashboardLayout pageTitle="Daily Expenses">
       <Card noPadding>
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="max-w-[180px]" />
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className='w-full'>
+
+          <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-full sm:max-w-[180px]" />
+          </div>
+          <div className="flex sm:flex-row sm:justify-end flex-col w-full items-center gap-4">
+            <div className="w-full sm:max-w-max">
               <p className="text-xs text-slate-400">Total for {formatDate(selectedDate)}</p>
               <p className="text-lg font-semibold text-slate-800">{formatCurrency(summary?.total_expenses ?? 0)}</p>
             </div>
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button className='w-full sm:max-w-max' onClick={() => setIsModalOpen(true)}>
               <Plus className="h-4 w-4" /> Add Expense
             </Button>
           </div>

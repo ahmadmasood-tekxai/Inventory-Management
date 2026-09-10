@@ -82,7 +82,7 @@ export function PurchasesPage() {
         title="Purchase Entries"
         subtitle="Enter total amount + rate — quantity is calculated automatically"
         action={
-          <Button size="sm" onClick={() => setIsModalOpen(true)}>
+          <Button className='sm:max-w-max w-full' size="sm" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> New Purchase
           </Button>
         }
