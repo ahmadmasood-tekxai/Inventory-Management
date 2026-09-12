@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from typing import List, Optional
 
@@ -41,9 +42,8 @@ def create_item(payload: ItemCreate, db: Session = Depends(get_db), current_user
     db.add(item)
     db.flush()
 
-    # Record the opening stock as the first auditable movement (delta 0 is a no-op,
-    # but we log it so the item's timeline always starts from a known point).
-    record_movement(db, item.id, StockMovementType.OPENING, Decimal("0"), note="Opening stock", created_by_id=current_user.id)
+    # Record the opening stock as the first auditable movement.
+    record_movement(db, item.id, StockMovementType.OPENING, payload.opening_stock, note="Opening stock", created_by_id=current_user.id)
 
     db.commit()
     db.refresh(item)
@@ -103,7 +103,18 @@ def update_item(
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    dump = payload.model_dump(exclude_unset=True)
+    
+    # If opening_stock is being updated, we must also update the OPENING stock movement.
+    if "opening_stock" in dump and item.opening_stock != dump["opening_stock"]:
+        opening_movement = db.query(StockMovement).filter(
+            StockMovement.item_id == item.id, 
+            StockMovement.movement_type == StockMovementType.OPENING
+        ).first()
+        if opening_movement:
+            opening_movement.quantity_delta = dump["opening_stock"]
+
+    for field, value in dump.items():
         setattr(item, field, value)
 
     db.commit()
@@ -182,16 +193,30 @@ def create_sale_entry(
     )
 
 
-@sales_router.get("", response_model=List[SaleEntryWithItemOut])
+@sales_router.get("", response_model=PaginatedResponse[SaleEntryWithItemOut])
 def list_sale_entries(
     item_id: Optional[int] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     query = db.query(SaleEntry).join(Item, SaleEntry.item_id == Item.id)
     if item_id:
         query = query.filter(SaleEntry.item_id == item_id)
-    sales = query.order_by(SaleEntry.sale_date.desc(), SaleEntry.id.desc()).all()
+    if search:
+        like = f"%{search}%"
+        query = query.filter((Item.code.ilike(like)) | (Item.name.ilike(like)))
+    if start_date:
+        query = query.filter(SaleEntry.sale_date >= start_date)
+    if end_date:
+        query = query.filter(SaleEntry.sale_date <= end_date)
+
+    total = query.count()
+    sales = query.order_by(SaleEntry.sale_date.desc(), SaleEntry.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     results = []
     for sale in sales:
@@ -202,4 +227,6 @@ def list_sale_entries(
                 item_code=item.code, item_name=item.name, remaining_stock_after=get_remaining_stock(db, item),
             )
         )
-    return results
+    
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    return PaginatedResponse(items=results, total=total, page=page, page_size=page_size, total_pages=total_pages)

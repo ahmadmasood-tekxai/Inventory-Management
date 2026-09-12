@@ -20,6 +20,23 @@ export default {
       fontFamily: {
         sans: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'],
       },
+      keyframes: {
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '20%': { transform: 'rotate(-15deg)' },
+          '40%': { transform: 'rotate(15deg)' },
+          '60%': { transform: 'rotate(-10deg)' },
+          '80%': { transform: 'rotate(10deg)' },
+        },
+        shrink: {
+          '0%': { width: '100%' },
+          '100%': { width: '0%' },
+        },
+      },
+      animation: {
+        wiggle: 'wiggle 0.6s ease-in-out',
+        shrink: 'shrink 3.5s linear forwards',
+      },
     },
   },
   plugins: [],
