@@ -1,9 +1,16 @@
 import { apiClient } from '@/api/client';
-import type { CashBookInput, CashBookWithBalance } from '@/types';
+import type { CashBookInput, CashBookWithBalance, PaginatedResponse } from '@/types';
+
+export interface ListCashParams {
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  page_size?: number;
+}
 
 export const cashApi = {
-  list: async (): Promise<CashBookWithBalance[]> => {
-    const { data } = await apiClient.get<CashBookWithBalance[]>('/cash');
+  list: async (params: ListCashParams = {}): Promise<PaginatedResponse<CashBookWithBalance>> => {
+    const { data } = await apiClient.get<PaginatedResponse<CashBookWithBalance>>('/cash', { params });
     return data;
   },
 

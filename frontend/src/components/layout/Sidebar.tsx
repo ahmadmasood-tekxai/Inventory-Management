@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom';
+
 import {
+  Bell,
   Boxes,
   LayoutDashboard,
   Receipt,
@@ -11,6 +13,8 @@ import {
 import clsx from 'clsx';
 
 import { ROUTES } from '@/constants';
+import { useNotifications } from '@/hooks/useNotifications';
+
 
 const navItems = [
   {
@@ -33,6 +37,8 @@ export function Sidebar({
   isOpen?: boolean;
   onClose?: () => void;
 }) {
+
+  const { unreadCount: alertCount } = useNotifications();
   return (
     <>
       {/* Mobile Overlay */}
@@ -105,6 +111,34 @@ export function Sidebar({
               {label}
             </NavLink>
           ))}
+          {/* Notifications link with live badge */}
+          <NavLink
+            to={ROUTES.NOTIFICATIONS}
+            onClick={onClose}
+            className={({ isActive }) =>
+              clsx(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-brand-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+              )
+            }
+          >
+            <div className="relative">
+              <Bell className="h-4 w-4" />
+              {alertCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white leading-none">
+                  {alertCount > 9 ? '9+' : alertCount}
+                </span>
+              )}
+            </div>
+            Notifications
+            {alertCount > 0 && (
+              <span className="ml-auto rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                {alertCount}
+              </span>
+            )}
+          </NavLink>
         </nav>
       </aside>
     </>

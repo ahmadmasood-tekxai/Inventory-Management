@@ -21,6 +21,7 @@ class Item(Base):
     opening_stock: Mapped[float] = mapped_column(Numeric(14, 2), nullable=False, default=0)
     low_stock_threshold: Mapped[float] = mapped_column(Numeric(14, 2), nullable=False, default=5)
     notes: Mapped[str] = mapped_column(Text, nullable=True, default="")
+    image_path: Mapped[str] = mapped_column(String(512), nullable=True, default=None)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

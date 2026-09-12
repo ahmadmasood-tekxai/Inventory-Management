@@ -7,6 +7,7 @@ import { cashApi } from '@/api/cash';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Input } from '@/components/common/Input';
+import { Pagination } from '@/components/common/Pagination';
 import { Table, type TableColumn } from '@/components/common/Table';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import type { CashBookWithBalance } from '@/types';
@@ -18,7 +19,15 @@ export function CashPage() {
   const [openingCash, setOpeningCash] = useState('');
   const [formError, setFormError] = useState('');
 
-  const { data: history, isLoading } = useQuery({ queryKey: ['cash-book'], queryFn: cashApi.list });
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const { data: historyData, isLoading } = useQuery({ 
+    queryKey: ['cash-book-history', startDate, endDate, page], 
+    queryFn: () => cashApi.list({ start_date: startDate || undefined, end_date: endDate || undefined, page, page_size: pageSize }) 
+  });
   const { data: todayEntry } = useQuery({
     queryKey: ['cash-book', bookDate],
     queryFn: () => cashApi.getByDate(bookDate),
@@ -28,6 +37,7 @@ export function CashPage() {
   const setCashMutation = useMutation({
     mutationFn: cashApi.setOpeningCash,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cash-book-history'] });
       queryClient.invalidateQueries({ queryKey: ['cash-book'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       setOpeningCash('');
@@ -100,8 +110,21 @@ export function CashPage() {
       </div>
 
       <Card title="Cash Book History" noPadding>
+        <div className="flex gap-3 border-b border-slate-100 p-4 sm:flex-row flex-col">
+          <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} placeholder="Start Date" className="sm:max-w-[150px]" />
+          <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} placeholder="End Date" className="sm:max-w-[150px]" />
+        </div>
         <div className="p-4">
-          <Table columns={columns} data={history ?? []} rowKey={(c) => c.id} isLoading={isLoading} emptyMessage="No cash entries yet." />
+          <Table columns={columns} data={historyData?.items ?? []} rowKey={(c) => c.id} isLoading={isLoading} emptyMessage="No cash entries yet." />
+          {historyData && historyData.total_pages > 1 && (
+            <Pagination
+              page={historyData.page}
+              pageSize={historyData.page_size}
+              total={historyData.total}
+              totalPages={historyData.total_pages}
+              onPageChange={setPage}
+            />
+          )}
         </div>
       </Card>
     </DashboardLayout>

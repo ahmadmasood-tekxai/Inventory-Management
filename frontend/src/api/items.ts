@@ -48,9 +48,18 @@ export const itemsApi = {
   },
 };
 
+export interface ListSalesParams {
+  item_id?: number;
+  search?: string;
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  page_size?: number;
+}
+
 export const salesApi = {
-  list: async (itemId?: number): Promise<SaleEntry[]> => {
-    const { data } = await apiClient.get<SaleEntry[]>('/sales', { params: { item_id: itemId } });
+  list: async (params: ListSalesParams = {}): Promise<PaginatedResponse<SaleEntry>> => {
+    const { data } = await apiClient.get<PaginatedResponse<SaleEntry>>('/sales', { params });
     return data;
   },
 

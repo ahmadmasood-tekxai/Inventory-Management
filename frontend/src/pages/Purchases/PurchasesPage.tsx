@@ -9,6 +9,7 @@ import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Input, Select } from '@/components/common/Input';
 import { Modal } from '@/components/common/Modal';
+import { Pagination } from '@/components/common/Pagination';
 import { Table, type TableColumn } from '@/components/common/Table';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import type { PurchaseEntry } from '@/types';
@@ -25,7 +26,16 @@ export function PurchasesPage() {
   const [note, setNote] = useState('');
   const [formError, setFormError] = useState('');
 
-  const { data: purchases, isLoading } = useQuery({ queryKey: ['purchases'], queryFn: purchasesApi.list });
+  const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['purchases', search, startDate, endDate, page],
+    queryFn: () => purchasesApi.list({ search: search || undefined, start_date: startDate || undefined, end_date: endDate || undefined, page, page_size: pageSize })
+  });
   const { data: itemsPage } = useQuery({ queryKey: ['items-for-select'], queryFn: () => itemsApi.list({ page_size: 100 }) });
 
   const computedQuantity = useMemo(() => {
@@ -82,13 +92,64 @@ export function PurchasesPage() {
         title="Purchase Entries"
         subtitle="Enter total amount + rate — quantity is calculated automatically"
         action={
-          <Button className='sm:max-w-max w-full' size="sm" onClick={() => setIsModalOpen(true)}>
+          <Button className='sm:max-w-max w-full' size="md" onClick={() => setIsModalOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> New Purchase
           </Button>
         }
       >
+
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center">
+          {/* Search */}
+          <div className="w-full sm:flex-1">
+            <Input
+              placeholder="Search supplier or item..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full"
+            />
+          </div>
+
+          {/* Date Filters */}
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Start Date"
+              className="w-full sm:w-[160px]"
+            />
+
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setPage(1);
+              }}
+              placeholder="End Date"
+              className="w-full sm:w-[160px]"
+            />
+          </div>
+        </div>
+
+
         <div className="p-4">
-          <Table columns={columns} data={purchases ?? []} rowKey={(p) => p.id} isLoading={isLoading} emptyMessage="No purchases recorded yet." />
+          <Table columns={columns} data={data?.items ?? []} rowKey={(p) => p.id} isLoading={isLoading} emptyMessage="No purchases recorded yet." />
+          {data && data.total_pages > 1 && (
+            <Pagination
+              page={data.page}
+              pageSize={data.page_size}
+              total={data.total}
+              totalPages={data.total_pages}
+              onPageChange={setPage}
+            />
+          )}
         </div>
       </Card>
 
