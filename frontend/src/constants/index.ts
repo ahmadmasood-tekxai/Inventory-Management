@@ -6,7 +6,11 @@
 import { StockMovementType, UserRole } from '@/types';
 
 export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000/api/v1';
+  // Injected by Electron's preload script when running as a desktop app
+  (typeof window !== 'undefined' && (window as Window).ELECTRON_API_URL) ||
+  // Set via .env / VITE_API_BASE_URL when running as a normal web app
+  (import.meta.env.VITE_API_BASE_URL as string) ||
+  'http://localhost:8000/api/v1';
 
 export const AUTH_TOKEN_KEY = 'qasim_inventory_access_token';
 export const REFRESH_TOKEN_KEY = 'qasim_inventory_refresh_token';
@@ -49,6 +53,7 @@ export const ROUTES = {
   EXPENSES: '/expenses',
   CASH: '/cash',
   PURCHASES: '/purchases',
+  NOTIFICATIONS: '/notifications',
 } as const;
 
 export const CURRENCY_SYMBOL = 'Rs.';

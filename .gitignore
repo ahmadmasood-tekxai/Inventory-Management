@@ -8,7 +8,6 @@ venv/
 *.egg-info/
 
 # Env files (keep .env.example, ignore real .env)
-.env
 
 # Node
 node_modules/
@@ -17,3 +16,7 @@ dist/
 
 # OS
 .DS_Store
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+config.bat

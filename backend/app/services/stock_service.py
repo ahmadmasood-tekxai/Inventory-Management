@@ -21,7 +21,7 @@ def get_movement_sum(db: Session, item_id: int) -> Decimal:
 
 
 def get_remaining_stock(db: Session, item: Item) -> Decimal:
-    return Decimal(item.opening_stock) + get_movement_sum(db, item.id)
+    return get_movement_sum(db, item.id)
 
 
 def get_total_by_type(db: Session, item_id: int, movement_type: StockMovementType) -> Decimal:
@@ -51,6 +51,7 @@ def build_item_with_stock(db: Session, item: Item) -> dict:
         "total_sold": total_sold,
         "total_purchased": total_purchased,
         "is_low_stock": remaining <= Decimal(item.low_stock_threshold),
+        "image_path": item.image_path,
     }
 
 

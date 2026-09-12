@@ -1,14 +1,16 @@
-from typing import List
+from datetime import date
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.constants import StockMovementType
+from app.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, StockMovementType
 from app.core.database import get_db
 from app.models.item import Item
 from app.models.purchase import PurchaseEntry
 from app.models.user import User
+from app.schemas.common import PaginatedResponse
 from app.schemas.purchase import PurchaseEntryCreate, PurchaseEntryOut
 from app.services.stock_service import record_movement
 
@@ -53,6 +55,28 @@ def create_purchase(
     return purchase
 
 
-@router.get("", response_model=List[PurchaseEntryOut])
-def list_purchases(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(PurchaseEntry).order_by(PurchaseEntry.purchase_date.desc(), PurchaseEntry.id.desc()).all()
+@router.get("", response_model=PaginatedResponse[PurchaseEntryOut])
+def list_purchases(
+    search: Optional[str] = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    query = db.query(PurchaseEntry)
+    if search:
+        query = query.join(Item, PurchaseEntry.item_id == Item.id, isouter=True)
+        like = f"%{search}%"
+        query = query.filter((PurchaseEntry.supplier_name.ilike(like)) | (Item.name.ilike(like)) | (Item.code.ilike(like)))
+    if start_date:
+        query = query.filter(PurchaseEntry.purchase_date >= start_date)
+    if end_date:
+        query = query.filter(PurchaseEntry.purchase_date <= end_date)
+        
+    total = query.count()
+    purchases = query.order_by(PurchaseEntry.purchase_date.desc(), PurchaseEntry.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    return PaginatedResponse(items=purchases, total=total, page=page, page_size=page_size, total_pages=total_pages)

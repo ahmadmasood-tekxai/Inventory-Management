@@ -1,17 +1,19 @@
 from datetime import date
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.database import get_db
 from app.models.cash import CashBook
 from app.models.expense import ExpenseEntry
 from app.models.user import User
 from app.schemas.cash import CashBookCreate, CashBookWithBalanceOut
+from app.schemas.common import PaginatedResponse
 
 router = APIRouter(prefix="/cash", tags=["Cash Book"])
 
@@ -50,7 +52,24 @@ def get_cash_for_date(book_date: date, db: Session = Depends(get_db), current_us
     return _with_balance(db, book)
 
 
-@router.get("", response_model=List[CashBookWithBalanceOut])
-def list_cash_book(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    books = db.query(CashBook).order_by(CashBook.book_date.desc()).all()
-    return [_with_balance(db, b) for b in books]
+@router.get("", response_model=PaginatedResponse[CashBookWithBalanceOut])
+def list_cash_book(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    query = db.query(CashBook)
+    if start_date:
+        query = query.filter(CashBook.book_date >= start_date)
+    if end_date:
+        query = query.filter(CashBook.book_date <= end_date)
+        
+    total = query.count()
+    books = query.order_by(CashBook.book_date.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    items = [_with_balance(db, b) for b in books]
+    
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    return PaginatedResponse(items=items, total=total, page=page, page_size=page_size, total_pages=total_pages)

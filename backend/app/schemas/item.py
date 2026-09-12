@@ -20,6 +20,7 @@ class ItemCreate(BaseModel):
 class ItemUpdate(BaseModel):
     name: Optional[str] = Field(default=None, max_length=128)
     unit: Optional[str] = Field(default=None, max_length=32)
+    opening_stock: Optional[Decimal] = Field(default=None, ge=0)
     low_stock_threshold: Optional[Decimal] = Field(default=None, ge=0)
     notes: Optional[str] = None
 
@@ -32,6 +33,7 @@ class ItemOut(ORMBase):
     opening_stock: Decimal
     low_stock_threshold: Decimal
     notes: Optional[str]
+    image_path: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

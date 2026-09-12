@@ -47,3 +47,19 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/admin-exists", tags=["Auth"])
+def admin_exists(db: Session = Depends(get_db)):
+    """First-run detection endpoint used by the Electron desktop frontend.
+
+    Returns {\"exists\": true} if at least one user (admin or otherwise) has
+    been registered, meaning setup is complete. Returns {\"exists\": false} on
+    a fresh install with an empty database so the frontend can show the
+    initial account-creation wizard instead of the login form.
+
+    This endpoint intentionally requires no authentication so it is
+    accessible before any user exists.
+    """
+    has_user = db.query(User).first() is not None
+    return {"exists": has_user}
