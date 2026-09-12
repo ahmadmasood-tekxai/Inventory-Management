@@ -1,0 +1,19 @@
+{
+  "name": "qasim-inventory-desktop",
+  "version": "1.0.0",
+  "description": "Qasim Inventory — desktop app (Electron wrapper)",
+  "main": "dist/main.js",
+  "private": true,
+  "scripts": {
+    "build:ts": "tsc",
+    "desktop:dev": "npm run build:ts && electron .",
+    "desktop:build": "npm run build:ts && electron-builder",
+    "desktop:build:dir": "npm run build:ts && electron-builder --dir"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^32.1.2",
+    "electron-builder": "^25.0.5",
+    "typescript": "^5.6.2"
+  }
+}

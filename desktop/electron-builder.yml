@@ -1,0 +1,20 @@
+appId: com.qasiminventory.app
+productName: "Qasim Inventory"
+directories:
+  output: "dist-app"
+  buildResources: "assets"
+win:
+  icon: "assets/icon.png"
+  target: nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "Qasim Inventory"
+extraResources:
+  - from: "../backend/dist/qasim_backend.exe"
+    to: "backend/qasim_backend.exe"
+  - from: "../frontend/dist"
+    to: "frontend/dist"

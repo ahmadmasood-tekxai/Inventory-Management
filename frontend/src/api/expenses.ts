@@ -1,9 +1,17 @@
 import { apiClient } from '@/api/client';
-import type { DailyExpenseSummary, Expense, ExpenseInput } from '@/types';
+import type { DailyExpenseSummary, Expense, ExpenseInput, PaginatedResponse } from '@/types';
+
+export interface ListExpensesParams {
+  search?: string;
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  page_size?: number;
+}
 
 export const expensesApi = {
-  list: async (expenseDate?: string): Promise<Expense[]> => {
-    const { data } = await apiClient.get<Expense[]>('/expenses', { params: { expense_date: expenseDate } });
+  list: async (params: ListExpensesParams = {}): Promise<PaginatedResponse<Expense>> => {
+    const { data } = await apiClient.get<PaginatedResponse<Expense>>('/expenses', { params });
     return data;
   },
 

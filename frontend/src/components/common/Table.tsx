@@ -52,11 +52,30 @@ export function Table<T>({
         </thead>
         <tbody>
           {isLoading ? (
-            <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-slate-400">
-                Loading…
-              </td>
-            </tr>
+            Array.from({ length: 5 }).map((_, rowIndex) => (
+              <tr key={`skeleton-${rowIndex}`} className="border-b border-slate-100 last:border-0">
+                {columns.map((col, colIndex) => (
+                  <td
+                    key={`skeleton-${rowIndex}-${colIndex}`}
+                    className={clsx(
+                      'whitespace-nowrap px-4 py-3',
+                      col.align === 'right' && 'text-right',
+                      col.align === 'center' && 'text-center',
+                      col.className
+                    )}
+                  >
+                    <div
+                      className="h-4 animate-pulse rounded bg-slate-200"
+                      style={{
+                        width: `${Math.floor(Math.random() * 40) + 40}%`, // random width between 40-80%
+                        marginLeft: col.align === 'right' || col.align === 'center' ? 'auto' : undefined,
+                        marginRight: col.align === 'center' ? 'auto' : undefined,
+                      }}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))
           ) : data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-slate-400">

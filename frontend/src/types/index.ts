@@ -64,6 +64,7 @@ export interface Item {
   opening_stock: number;
   low_stock_threshold: number;
   notes?: string | null;
+  image_path?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -100,6 +101,7 @@ export interface ItemCreateInput {
 export interface ItemUpdateInput {
   name?: string;
   unit?: string;
+  opening_stock?: number;
   low_stock_threshold?: number;
   notes?: string;
 }
